@@ -1,0 +1,150 @@
+<div class="container mb-5">
+  <div>
+    <h3 class="mb-3">#My cart</h3>
+    <table class="table table-bordered text-center">
+      <thead class="bg-warning">
+      <th>Product</th>
+      <th>Size</th>
+      <th>Color</th>
+      <th>Price</th>
+      <th>Quantity</th>
+      <th>Total</th>
+      <th>Delete</th>
+      </thead>
+      <tr *ngFor="let cart of cartList">
+        <td>
+          <img width="200px" src="{{cart.product.pictures[0].src}}" alt="Card image cap">
+          <div class="card-body">
+            <h5 class="card-title">{{cart.product.name}}</h5>
+          </div>
+        </td>
+        <td>
+          <select name="size" (change)="onChangeSize($event, cart)">
+            <option value="null">Select Size</option>
+            <option *ngFor="let size of sizes" value="{{size.id}}"
+            >{{size.name}}</option>
+          </select>
+        </td>
+        <td>
+          <select name="color" (change)="onChangeColor($event, cart)">
+            <option value="null">Select Color</option>
+            <option *ngFor="let color of colors" value="{{color.id}}"
+            >{{color.name}}</option>
+          </select>
+        </td>
+        <td>{{cart.product.price | currency: "VND" : "đ"}}</td>
+        <td><input type="number" step="1" style="width: 50px" [value]="cart.quantity" name="quantity"
+                   (change)="onChangeQuantity($event, cart)"></td>
+        <td>{{cart.product.price * cart.quantity | currency: "VND"}}</td>
+        <td>
+          <button class="btn btn-danger" (click)="deleteCart(cart.id)">Delete</button>
+        </td>
+      </tr>
+      <tr>
+        <td class="text-info"><b>Total price</b></td>
+        <td colspan="6" class="text-right text-info mr-4"><b>{{totalPrice| currency: "VND"}}</b></td>
+      </tr>
+    </table>
+    <input type="button" class="btn btn-info btn-block" data-toggle="modal" data-target="#OrderModal" value="Order"
+           *ngIf="token.getToken()">
+    <input type="button" class="btn btn-info btn-block" data-toggle="modal" data-target="#OrderModalNoLogin"
+           value="Order" *ngIf="!token.getToken()">
+  </div>
+
+
+  <div class="modal fade" id="OrderModal" tabindex="-1" role="dialog" aria-labelledby="OrderModalLabel"
+       aria-hidden="true" *ngIf="token.getToken()">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">#Order form </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h3>Please enter delivery information</h3>
+          <form class="card" *ngIf="order" [formGroup]="cartForm">
+            <div class="form-group">
+              <label><b>Your phone number</b></label>
+              <input type="text" class="form-control" formControlName="phone" (change)="onChangePhone($event)">
+              <div class="alert-danger" *ngIf="cartForm.get('phone').invalid && cartForm.get('phone').touched"
+                   style="color: red">
+                your phone number is invalid
+              </div>
+            </div>
+            <div>
+              <label><b>Shipping address</b></label>
+              <input type="text" class="form-control" formControlName="address" (change)="onChangeAddress($event)">
+              <div class="alert-danger" *ngIf="cartForm.get('address').invalid && cartForm.get('address').touched"
+                   style="color: red">
+                Address must be at least 3 characters
+              </div>
+            </div>
+            <div class="form-group">
+              <label><b>Payment</b></label>
+              <select formControlName="payment"class="form-control">
+                <option *ngFor="let payment of payments" value="{{payment.id}}"
+                >{{payment.name}}</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <input type="button" class="btn btn-secondary" data-dismiss="modal" value="Close">
+              <button data-dismiss="modal" type="button" class="btn btn-primary"
+                      (click)="createOrder()">Save
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="OrderModalNoLogin" tabindex="-1" role="dialog" aria-labelledby="OrderModalLabel"
+       aria-hidden="true" *ngIf="!token.getToken()">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">#Order form </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h3>Please enter delivery information</h3>
+          <form class="card" *ngIf="order" [formGroup]="cartForm">
+            <div class="form-group">
+              <strong>Your phone number</strong>
+              <input type="text" class="form-control" formControlName="phone" (change)="onChangePhone($event)">
+              <div class="alert-danger" *ngIf="cartForm.get('phone').invalid && cartForm.get('phone').touched"
+                   style="color: red">
+                Is not a Vietnamese phone number
+              </div>
+            </div>
+            <div class="form-group">
+              <strong>Shipping address</strong>
+              <input type="text" class="form-control" formControlName="address" (change)="onChangeAddress($event)">
+              <div class="alert-danger" *ngIf="cartForm.get('address').invalid && cartForm.get('address').touched"
+                   style="color: red">
+                Address must be at least 3 characters
+              </div>
+            </div>
+            <div class="form-group">
+              <label><b>Payment</b></label>
+              <select formControlName="payment"class="form-control">
+                <option *ngFor="let payment of payments" value="{{payment.id}}"
+                >{{payment.name}}</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <input type="button" class="btn btn-secondary" data-dismiss="modal" value="Close">
+              <button [disabled]="cartForm.get('address').invalid || cartForm.get('phone').invalid" data-dismiss="modal"
+                      type="button" class="btn btn-primary" (click)="createOrder()">Save
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
